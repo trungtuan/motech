@@ -1,4 +1,3 @@
-FROM tutum/tomcat:7.0
-RUN apt-get --yes install maven
-ENV MAVEN_OPTS -Xmx512m -XX:MaxPermSize=128m
-RUN mvn clean install
+FROM nhong/motech-autobuild:latest
+RUN cd /opt/motech && mvn clean install -fn
+RUN cp /opt/motech/platform/server/target/motech-platform-server.war /tomcat/webapps

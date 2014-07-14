@@ -2015,7 +2015,7 @@
         /**
         * A map containing names of all entities in MDS, indexed by module names
         */
-        $scope.modules = undefined;
+        $scope.modules = {};
 
         /**
         * This variable is set after user clicks "View" button next to chosen entity
@@ -2070,13 +2070,9 @@
 
         $scope.validatePattern = '';
 
-        $scope.optionValueStatus = false;
-
         $scope.optionValue = '';
 
         $rootScope.filters = [];
-
-        $scope.fieldValue = [];
 
         $scope.instanceEditMode = false;
 
@@ -2804,6 +2800,20 @@
             }
         };
 
+        $scope.expandAll = function () {
+            $scope.hidden.length = 0;
+        };
+
+        $scope.collapseAll = function () {
+            angular.forEach($scope.modules, function (entities, module) {
+                if ($scope.visible(module)) {
+                    $scope.hidden.push(module);
+                }
+            });
+        };
+
+
+
         /*
         *  Gets field from FieldRecord to set field-edit value
         */
@@ -2899,41 +2909,6 @@
         */
         $scope.getComboboxValues = function (settings) {
             return MDSUtils.find(settings, [{field: 'name', value: 'mds.form.label.values'}], true).value;
-        };
-
-        /**
-        * Add new option to combobox.
-        */
-        $scope.change = function (newOptionValue) {
-            if ($scope.optionValue !== newOptionValue) {
-                $scope.optionValueStatus = true;
-            }
-        };
-        $scope.showAddOptionInput = function (id) {
-           $('#showAddOptionInput' + id).removeClass('hidden');
-        };
-        $scope.addOptionCombobox = function (field, newOptionValue) {
-            if (field !== null && field.settings[2].value) {
-                if (field !== null && field.value !== null) {
-                    $scope.fieldValue = field.value;
-                } else {
-                    $scope.fieldValue = [];
-                }
-                $scope.fieldValue.push(newOptionValue);
-                field.value = $scope.fieldValue;
-            } else {
-                field.value = newOptionValue;
-            }
-            field.settings[0].value.push(newOptionValue);
-
-            $('#showAddOptionInput' + field.id).addClass('hidden');
-            $scope.newOptionValue = '';
-            $scope.optionValueStatus = false;
-            $scope.optionValue = newOptionValue;
-        };
-
-        $scope.changeOptionValue = function (field, value) {
-            field.value = value;
         };
 
         /**

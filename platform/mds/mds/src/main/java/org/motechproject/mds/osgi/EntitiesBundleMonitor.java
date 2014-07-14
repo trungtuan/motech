@@ -40,7 +40,7 @@ import static org.motechproject.mds.util.Constants.BundleNames.MDS_ENTITIES_SYMB
 @Component
 public class EntitiesBundleMonitor implements BundleListener, ServiceListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntitiesBundleMonitor.class);
-    private static final Byte MAX_WAIT_COUNT = 20;
+    private static final Byte MAX_WAIT_COUNT = 100;
     private static final Long FIVE_SECONDS = 5 * 1000L;
 
     private final Object lock = new Object();
@@ -53,8 +53,6 @@ public class EntitiesBundleMonitor implements BundleListener, ServiceListener {
     private boolean bundleStopped;
     private boolean bundleUninstalled;
     private boolean contextInitialized;
-
-    private Bundle bundle;
 
     /**
      * Initialises the monitor.
@@ -78,13 +76,11 @@ public class EntitiesBundleMonitor implements BundleListener, ServiceListener {
 
         LOGGER.debug("Added entities bundle monitor as bundle/service listener to bundle context");
 
-        bundle = findBundleBySymbolicName(bundleContext, MDS_ENTITIES_SYMBOLIC_NAME);
+        Bundle entitiesBundle = getEntitiesBundle();
 
-        if (null != bundle) {
+        if (null != entitiesBundle) {
             stop();
             uninstall();
-
-            bundle = null;
         }
 
         String location = bundleLocation();
@@ -180,9 +176,9 @@ public class EntitiesBundleMonitor implements BundleListener, ServiceListener {
         LOGGER.debug("Starting bundle from: {}", src);
 
         try (InputStream stream = new FileInputStream(src)) {
-            bundle = findBundleBySymbolicName(bundleContext, MDS_ENTITIES_SYMBOLIC_NAME);
+            Bundle entitiesBundle = getEntitiesBundle();
 
-            if (bundle == null) {
+            if (entitiesBundle == null) {
                 LOGGER.info("Entities bundle does not exist");
                 install(stream);
             } else {
@@ -222,7 +218,13 @@ public class EntitiesBundleMonitor implements BundleListener, ServiceListener {
         LOGGER.info("Starting the entities bundle");
 
         try {
-            bundle.start();
+            Bundle entitiesBundle = getEntitiesBundle();
+            if (entitiesBundle != null && entitiesBundle.getState() != Bundle.STARTING
+                    && entitiesBundle.getState() != Bundle.ACTIVE) {
+                entitiesBundle.start();
+            } else {
+                LOGGER.warn("No entities bundle to start");
+            }
         } catch (BundleException e) {
             throw new MdsException("Unable to start the entities bundle", e);
         }
@@ -251,7 +253,7 @@ public class EntitiesBundleMonitor implements BundleListener, ServiceListener {
         LOGGER.info("Installing the entities bundle");
 
         try {
-            bundle = bundleContext.installBundle(bundleLocation(), stream);
+            bundleContext.installBundle(bundleLocation(), stream);
         } catch (BundleException e) {
             throw new MdsException("Unable to install the entities bundle", e);
         }
@@ -270,7 +272,12 @@ public class EntitiesBundleMonitor implements BundleListener, ServiceListener {
         LOGGER.info("Stopping the entities bundle");
 
         try {
-            bundle.stop();
+            Bundle entitiesBundle = getEntitiesBundle();
+            if (entitiesBundle != null) {
+                entitiesBundle.stop();
+            } else {
+                LOGGER.warn("No entities bundle to stop");
+            }
         } catch (BundleException e) {
             throw new MdsException("Unable to stop the entities bundle", e);
         }
@@ -289,7 +296,12 @@ public class EntitiesBundleMonitor implements BundleListener, ServiceListener {
         LOGGER.info("Uninstalling the entities bundle");
 
         try {
-            bundle.uninstall();
+            Bundle entitiesBundle = getEntitiesBundle();
+            if (entitiesBundle != null) {
+                entitiesBundle.uninstall();
+            } else {
+                LOGGER.warn("No entities bundle to uninstall");
+            }
         } catch (BundleException e) {
             throw new MdsException("Unable to uninstall the entities bundle", e);
         }
@@ -308,7 +320,12 @@ public class EntitiesBundleMonitor implements BundleListener, ServiceListener {
         LOGGER.info("Updating the entities bundle");
 
         try {
-            bundle.update(stream);
+            Bundle entitiesBundle = getEntitiesBundle();
+            if (entitiesBundle != null) {
+                entitiesBundle.update(stream);
+            } else {
+                throw new MdsException("No entities bundle to update, unable to update entities");
+            }
         } catch (BundleException e) {
             throw new MdsException("Unable to update the entities bundle", e);
         }
@@ -323,11 +340,16 @@ public class EntitiesBundleMonitor implements BundleListener, ServiceListener {
         LOGGER.info("Updated the entities bundle");
     }
 
+    private Bundle getEntitiesBundle() {
+        return findBundleBySymbolicName(bundleContext, MDS_ENTITIES_SYMBOLIC_NAME);
+    }
+
     private void waitUntil(Condition condition, String status) {
         int count = 0;
 
         synchronized (lock) {
             while (condition.await() && count < MAX_WAIT_COUNT) {
+                LOGGER.trace(String.format("We are waiting for bundle status, condition.await is %b, count is %d and MAX_WAIT_COUNT is %d",condition.await(), count, MAX_WAIT_COUNT));
                 LOGGER.debug(
                         "[{}/{}] Wait {} milliseconds until the entities bundle will be {}",
                         new Object[]{count + 1, MAX_WAIT_COUNT, FIVE_SECONDS, status}
@@ -342,6 +364,8 @@ public class EntitiesBundleMonitor implements BundleListener, ServiceListener {
                 ++count;
             }
 
+            LOGGER.trace(String.format("We finished waiting for bundle status, condition.await is %b, count is %d and MAX_WAIT_COUNT is %d",condition.await(), count, MAX_WAIT_COUNT));
+
             if (condition.await()) {
                 throw new IllegalStateException("timeout");
             }
@@ -351,5 +375,4 @@ public class EntitiesBundleMonitor implements BundleListener, ServiceListener {
     private static interface Condition {
         boolean await();
     }
-
 }

@@ -152,6 +152,8 @@
         */
         setBrowsing = function() {
             if($scope.fields !== undefined && $scope.advancedSettings.browsing !== undefined) {
+                $scope.browsingDisplayed = [];
+
                 $scope.browsingAvailable = $.grep($scope.fields, function(field) {
                     return $scope.advancedSettings.browsing.displayedFields.indexOf(field.id) < 0;
                 });
@@ -709,6 +711,7 @@
                         $scope.fields.push(field);
                         $scope.advancedSettings.browsing.displayedFields.push(field.id);
                         setBrowsing();
+                        setRest();
 
                         selector = '#show-field-details-{0}'.format($scope.fields.length - 1);
                         $scope.newField = {};
@@ -755,6 +758,9 @@
                             if(filterableIndex >= 0) {
                                 $scope.advancedSettings.browsing.filterableFields.splice(filterableIndex, 1);
                             }
+
+                            setBrowsing();
+                            setRest();
                         });
                     });
                 }
@@ -2002,7 +2008,7 @@
     * The DataBrowserCtrl controller is used on the 'Data Browser' view.
     */
     controllers.controller('DataBrowserCtrl', function ($rootScope, $scope, $http, Entities, Instances, History,
-                                $timeout, MDSUtils, Locale, $cookies) {
+                                $timeout, MDSUtils, Locale) {
         workInProgress.setActualEntity(Entities, undefined);
 
         $scope.modificationFields = ['modificationDate', 'modifiedBy'];
@@ -2550,20 +2556,22 @@
         };
 
         $scope.dataBrowserPreferencesCookieName = function(entity) {
-            return 'org.motechproject.mds.databrowser.fields.' + entity.className + '#' + entity.id;
+            var username = $rootScope.username || '';
+            return username + '_org.motechproject.mds.databrowser.fields.' + entity.className + '#' + entity.id;
         };
 
         $scope.getDataBrowserUserPreferencesCookie = function(entity) {
-            var cookie, cookieName = $scope.dataBrowserPreferencesCookieName($scope.selectedEntity);
+            var cookieName = $scope.dataBrowserPreferencesCookieName($scope.selectedEntity),
+                cookie;
             // get or create
-            if ($cookies[cookieName]) {
-                cookie = JSON.parse($cookies[cookieName]);
+            if ($.cookie(cookieName)) {
+                cookie = JSON.parse($.cookie(cookieName));
             } else {
                 cookie = {
                     selected: [],
                     unselected: []
                 };
-                $cookies[cookieName] = JSON.stringify(cookie);
+                $.cookie(cookieName, JSON.stringify(cookie));
             }
 
             // check fields
@@ -2631,7 +2639,7 @@
                     }
                 }
 
-                $cookies[cookieName] = JSON.stringify(dbUserPreferences);
+                $.cookie(cookieName, JSON.stringify(dbUserPreferences));
             }
         };
 

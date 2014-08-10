@@ -328,7 +328,7 @@
         */
         $scope.filterableTypes = [
             "mds.field.combobox", "mds.field.boolean", "mds.field.date",
-            "mds.field.time", "mds.field.datetime"
+            "mds.field.time", "mds.field.datetime", "mds.field.localDate"
         ];
 
         $scope.availableUsers = Users.query();
@@ -338,21 +338,25 @@
         $scope.currentError = undefined;
 
         $scope.setError = function(error, params) {
-            var errorCode;
+            $scope.currentError = $scope.msg(error, params);
+        };
+
+        $scope.setErrorFromData = function(error) {
+            var responseData, errorCode, errorParams;
 
             if (error) {
-                if (error.data) {
-                    errorCode = error.data;
-
-                    if (errorCode.startsWith('key:')) {
-                        errorCode = errorCode.split(':')[1];
-                    }
-                } else if ($.type(error) === 'string') {
-                    errorCode = error;
+                responseData = error.data;
+                if (responseData && (typeof(responseData) === 'string') && responseData.startsWith('key:') && !responseData.endsWith('key')) {
+                     if (responseData.indexOf('params:') !== -1) {
+                        errorCode = responseData.split('\n')[0].split(':')[1];
+                        errorParams = responseData.split('\n')[1].split(':')[1].split(',');
+                     } else {
+                        errorCode = responseData.split(':')[1];
+                     }
                 }
             }
 
-            $scope.currentError = $scope.msg(errorCode, params);
+            $scope.currentError = $scope.msg(errorCode, errorParams);
         };
 
         $scope.unsetError = function() {
@@ -376,6 +380,19 @@
             };
 
             Entities.draft(pre, data, func, angularHandler('mds.error', 'mds.error.draftSave', errorHandler));
+        };
+
+        $scope.dateDefaultValueChange = function (val, id) {
+            var fieldPath = 'basic.defaultValue';
+
+            $scope.draft({
+                edit: true,
+                values: {
+                    path: fieldPath,
+                    fieldId: id,
+                    value: [val]
+                }
+            });
         };
 
         /**
@@ -828,6 +845,22 @@
         };
 
         /**
+        * Check if field is used in a referenced lookup.
+        *
+        * @param {object} field The field to check.
+        * @return {boolean} true if the field is use in a referenced lookup; otherwise false.
+        */
+        $scope.fieldUsedInReferencedLookup = function (field) {
+            var i;
+            for (i = 0; i < field.lookups.length; i += 1) {
+                if (field.lookups[i].referenced) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        /**
         * Validate all information inside the given field.
         *
         * @param {object} field The field to validate.
@@ -936,7 +969,7 @@
                     $scope.fields = Entities.getFields(pre, successCallback);
                 },
                 errorCallback = function (data) {
-                    $scope.setError(data);
+                    $scope.setErrorFromData(data);
                     unblockUI();
                 };
 
@@ -2008,7 +2041,7 @@
     * The DataBrowserCtrl controller is used on the 'Data Browser' view.
     */
     controllers.controller('DataBrowserCtrl', function ($rootScope, $scope, $http, Entities, Instances, History,
-                                $timeout, MDSUtils, Locale) {
+                                $timeout, MDSUtils, Locale, Users) {
         workInProgress.setActualEntity(Entities, undefined);
 
         $scope.modificationFields = ['modificationDate', 'modifiedBy'];
@@ -2076,8 +2109,6 @@
 
         $scope.validatePattern = '';
 
-        $scope.optionValue = '';
-
         $rootScope.filters = [];
 
         $scope.instanceEditMode = false;
@@ -2093,6 +2124,8 @@
         $scope.availableLocale = Locale.get();
 
         $scope.selectedFieldId = 0;
+
+        $scope.availableUsers = Users.query();
 
         // fields which won't be persisted in the user cookie
         $scope.autoDisplayFields = [];
@@ -2123,7 +2156,11 @@
         * Sets module and entity name
         */
         $scope.setModuleEntity = function (module, entityName) {
-            $scope.tmpModuleName = module;
+            if (module === undefined || module === null) {
+                $scope.tmpModuleName = "(No module)";
+            } else {
+                $scope.tmpModuleName = module;
+            }
             $scope.tmpEntityName = entityName;
         };
 
@@ -2201,10 +2238,11 @@
         /**
         * Sets selected entity by module and entity name
         */
-        $scope.editInstance = function(id) {
+        $scope.editInstance = function(id, module, entityName) {
             blockUI();
             $scope.setHiddenFilters();
             $scope.instanceEditMode = true;
+            $scope.setModuleEntity(module, entityName);
             $scope.loadedFields = Instances.selectInstance({
                 id: $scope.selectedEntity.id,
                 param: id
@@ -2647,7 +2685,7 @@
             var type = field.type.typeClass;
             if (type === "java.lang.Boolean") {
                 return ['ALL', 'YES', 'NO'];
-            } else if (type === "java.util.Date" || type === "org.joda.time.DateTime") {
+            } else if (type === "java.util.Date" || type === "org.joda.time.DateTime" || type === "org.joda.time.LocalDate") {
                 return ['ALL', 'TODAY', 'PAST_7_DAYS', 'THIS_MONTH', 'THIS_YEAR'];
             }
         };
@@ -2897,6 +2935,8 @@
                 if (MDSUtils.find(field.settings, [{field: 'name', value: 'mds.form.label.allowMultipleSelections'}], true).value) {
                     value = 'combobox-multi';
                 }
+            } else if (value === 'string' && field.name === 'owner') {
+                value = 'string-owner';
             }
             return '../mds/resources/partials/widgets/field-edit-Value-{0}.html'
                           .format(value.substring(value.toLowerCase()));
@@ -3048,6 +3088,20 @@
         $scope.printDateTime = function(dt) {
             return moment(dt, 'YYYY-MM-DD HH:mm ZZ').format('YYYY-MM-DD, HH:mm');
         };
+        /**
+        * Return available users.
+        *
+        * @return {Array} A array of possible users.
+        */
+        $scope.getUsers = function () {
+            var users = [];
+            angular.forEach($scope.availableUsers,
+                function(value, key) {
+                    this.push(value.userName);
+                }, users);
+            return  users;
+        };
+
     });
 
     /**

@@ -37,11 +37,6 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>motech-platform-osgi-extender-fragment</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>motech-pax-it</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
@@ -98,19 +93,10 @@
             <groupId>javax.activation</groupId>
             <artifactId>com.springsource.javax.activation</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.objectweb.howl</groupId>
-            <artifactId>com.springsource.org.objectweb.howl</artifactId>
-        </dependency>
         <!-- Test -->
         <dependency>
             <groupId>junit-addons</groupId>
             <artifactId>junit-addons</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>motech-testing-utils</artifactId>
-            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -205,31 +191,6 @@
             <id>IT</id>
             <build>
                 <plugins>
-                    <plugin>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.6</version>
-                        <executions>
-                            <!-- Pre Integration -->
-                            <execution>
-                                <id>Pre IT - Drop Platform Startup DB</id>
-                                <phase>pre-integration-test</phase>
-                                <configuration>
-                                    <target>
-                                        <exec executable="curl">
-                                            <arg value="-s" />
-                                            <arg value="-S" />
-                                            <arg value="-X" />
-                                            <arg value="DELETE" />
-                                            <arg value="http://${db.server}:${db.port}/${db.prefix}motech-platform-startup" />
-                                        </exec>
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-failsafe-plugin</artifactId>

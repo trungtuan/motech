@@ -18,8 +18,11 @@ import org.motechproject.mds.repository.MetadataHolder;
 import org.motechproject.mds.service.JarGeneratorService;
 import org.motechproject.mds.util.ClassName;
 import org.motechproject.osgi.web.util.BundleHeaders;
+import org.motechproject.osgi.web.util.WebBundleUtil;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.wiring.FrameworkWiring;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +40,7 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -70,6 +74,7 @@ public class JarGeneratorServiceImpl implements JarGeneratorService {
     private VelocityEngine velocityEngine;
     private MDSDataProvider mdsDataProvider;
     private EntitiesBundleMonitor monitor;
+    private BundleContext bundleContext;
 
     @Override
     @Transactional
@@ -79,12 +84,22 @@ public class JarGeneratorServiceImpl implements JarGeneratorService {
 
     @Override
     @Transactional
-    public synchronized void regenerateMdsDataBundle(boolean buildDDE, boolean startBundle) {
+    public void regenerateMdsDataBundleAfterDdeEnhancement(String moduleName) {
+        regenerateMdsDataBundle(true, true, moduleName);
+    }
+
+    @Override
+    @Transactional
+    public void regenerateMdsDataBundle(boolean buildDDE, boolean startBundle) {
+        regenerateMdsDataBundle(buildDDE, startBundle, null);
+    }
+
+    private synchronized void regenerateMdsDataBundle(boolean buildDDE, boolean startBundle, String moduleName) {
         LOGGER.info("Regenerating the mds entities bundle");
 
-        boolean contructed = mdsConstructor.constructEntities(buildDDE);
+        boolean constructed = mdsConstructor.constructEntities(buildDDE);
 
-        if (!contructed) {
+        if (!constructed) {
             return;
         }
 
@@ -118,6 +133,10 @@ public class JarGeneratorServiceImpl implements JarGeneratorService {
             dest = tmpBundleFile;
         }
 
+        if (StringUtils.isNotBlank(moduleName)) {
+            refreshModule(moduleName);
+        }
+
         try {
             monitor.start(dest, startBundle);
         } finally {
@@ -134,11 +153,18 @@ public class JarGeneratorServiceImpl implements JarGeneratorService {
         java.util.jar.Manifest manifest = createManifest();
         FileOutputStream fileOutput = new FileOutputStream(tempFile.toFile());
 
+        StringBuilder entityNamesSb = new StringBuilder();
+
         try (JarOutputStream output = new JarOutputStream(fileOutput, manifest)) {
             List<EntityInfo> information = new ArrayList<>();
 
             for (ClassData classData : MotechClassPool.getEnhancedClasses(false)) {
                 String className = classData.getClassName();
+
+                // we keep the name to construct a file containing all entity names
+                // the file is required for schema generation
+                entityNamesSb.append(className).append('\n');
+
                 EntityInfo info = new EntityInfo();
                 info.setClassName(className);
 
@@ -189,10 +215,12 @@ public class JarGeneratorServiceImpl implements JarGeneratorService {
 
             String blueprint = mergeTemplate(information, BLUEPRINT_TEMPLATE);
             String context = mergeTemplate(information, MDS_ENTITIES_CONTEXT_TEMPLATE);
+            String entityNames = entityNamesSb.toString();
 
             addEntry(output, PACKAGE_JDO, metadataHolder.getJdoMetadata().toString().getBytes());
             addEntry(output, BLUEPRINT_XML, blueprint.getBytes());
             addEntry(output, MDS_ENTITIES_CONTEXT, context.getBytes());
+            addEntry(output, ENTITY_LIST_FILE, entityNames.getBytes());
             addEntry(output, MDS_COMMON_CONTEXT);
             addEntry(output, DATANUCLEUS_PROPERTIES);
             addEntry(output, MOTECH_MDS_PROPERTIES);
@@ -341,8 +369,25 @@ public class JarGeneratorServiceImpl implements JarGeneratorService {
         return sb.toString();
     }
 
+    private void refreshModule(String moduleName) {
+        LOGGER.info("Refreshing module '{}' before restarting the entities bundle", moduleName);
+
+        Bundle bundleToRefresh = WebBundleUtil.findBundleByName(bundleContext, moduleName);
+
+        if (bundleToRefresh != null) {
+            Bundle frameworkBundle = bundleContext.getBundle(0);
+            FrameworkWiring frameworkWiring = frameworkBundle.adapt(FrameworkWiring.class);
+
+            frameworkWiring.refreshBundles(Arrays.asList(bundleToRefresh));
+        } else {
+            LOGGER.warn("Module '{}' not present, skipping refresh, but this can indicate of an error",
+                    moduleName);
+        }
+    }
+
     @Autowired
     public void setBundleContext(BundleContext bundleContext) {
+        this.bundleContext = bundleContext;
         this.bundleHeaders = new BundleHeaders(bundleContext);
     }
 

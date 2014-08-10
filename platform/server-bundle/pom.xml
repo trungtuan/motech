@@ -11,11 +11,10 @@
         <relativePath>../../</relativePath>
     </parent>
 
-    <groupId>org.motechproject</groupId>
     <artifactId>motech-platform-server-bundle</artifactId>
     <version>0.25-SNAPSHOT</version>
     <packaging>bundle</packaging>
-    <name>MoTeCH Platform Server Bundle</name>
+    <name>MOTECH Platform Server Bundle</name>
 
     <properties>
         <modules.root.dir>${basedir}/../..</modules.root.dir>
@@ -31,11 +30,6 @@
         <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.eventadmin</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>motech-platform-commons-couchdb</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -64,14 +58,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>com.springsource.javax.validation</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>org.motechproject.org.hibernate.validator</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>org.springframework.web.servlet</artifactId>
         </dependency>
@@ -85,10 +71,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
-            <artifactId>com.springsource.org.apache.commons.beanutils</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
             <artifactId>com.springsource.org.apache.commons.lang</artifactId>
         </dependency>
         <dependency>
@@ -98,21 +80,7 @@
         <dependency>
             <groupId>org.eclipse.gemini.blueprint</groupId>
             <artifactId>org.motechproject.gemini-blueprint-test</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>com.springsource.org.apache.commons.io</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>motech-testing-utils</artifactId>
-            <version>${project.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>motech-platform-osgi-extender-fragment</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -186,7 +154,6 @@
                             org.motechproject.server.web.helper;version=${project.version}
                         </Export-Package>
                         <Import-Package>
-                            org.motechproject.commons.couchdb.service,
                             org.motechproject.config.service,
                             org.osgi.framework;version="0.0.0",
                             org.osgi.util.tracker;version="0.0.0",
@@ -326,37 +293,4 @@
             </plugin>
         </plugins>
     </build>
-    <profiles>
-        <profile>
-            <id>IT</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.6</version>
-                        <executions>
-                            <execution>
-                                <id>drop DB =&gt; motech-alert</id>
-                                <phase>pre-integration-test</phase>
-                                <configuration>
-                                    <target>
-                                        <exec executable="curl">
-                                            <arg value="-s" />
-                                            <arg value="-S" />
-                                            <arg value="-X" />
-                                            <arg value="DELETE" />
-                                            <arg value="http://${db.server}:${db.port}/${db.prefix}motech-platform-startup" />
-                                        </exec>
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>

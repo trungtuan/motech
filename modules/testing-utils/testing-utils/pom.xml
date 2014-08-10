@@ -18,21 +18,10 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>org.springframework.test</artifactId>
-            <!-- Override parent scope -->
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>org.junit</groupId>
             <artifactId>org.motechproject.org.junit</artifactId>
             <!-- Override parent scope -->
             <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>motech-platform-commons-couchdb</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.motechproject</groupId>
@@ -49,12 +38,12 @@
             <artifactId>com.springsource.javax.servlet</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.quartz-scheduler</groupId>
-            <artifactId>org.motechproject.org.quartz-scheduler</artifactId>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>com.springsource.org.apache.httpcomponents.httpclient</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.transaction</groupId>
-            <artifactId>com.springsource.javax.transaction</artifactId>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>org.motechproject.org.codehaus.jackson</artifactId>
         </dependency>
         <dependency>
             <groupId>org.mortbay.jetty</groupId>

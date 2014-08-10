@@ -26,6 +26,7 @@ import org.motechproject.mds.javassist.MotechClassPool;
 import org.motechproject.mds.repository.AllEntities;
 import org.motechproject.mds.repository.MetadataHolder;
 import org.motechproject.mds.util.ClassName;
+import org.motechproject.mds.util.Constants;
 import org.motechproject.mds.util.MDSClassLoader;
 import org.motechproject.osgi.web.util.WebBundleUtil;
 import org.osgi.framework.Bundle;
@@ -120,7 +121,7 @@ public class MDSConstructorImpl implements MDSConstructor {
         Map<String, ClassData> classDataMap = buildClassesAndMetadata(entities, jdoMetadata);
 
         // Finally we add the java classes to both
-        // the temporary classloader and enhancer
+        // the temporary ClassLoader and enhancer
         for (Entity entity : entities) {
             String className = entity.getClassName();
 
@@ -195,7 +196,10 @@ public class MDSConstructorImpl implements MDSConstructor {
                         }
                     });
 
-                    max = Math.max(max, sorted.indexOf(relation));
+                    // In case the relation is bidirectional, we shouldn't move the class,
+                    // in order to avoid infinite loop
+                    boolean biDirectional = field.getMetadata(Constants.MetadataKeys.RELATED_FIELD) != null;
+                    max = Math.max(max, biDirectional ? -1 : sorted.indexOf(relation));
                 }
 
                 if (max != i) {
@@ -540,7 +544,7 @@ public class MDSConstructorImpl implements MDSConstructor {
         Class<?> definition = null;
 
         if (declaringBundle == null) {
-            LOG.warn("Declaring bundle unavailable for entity {]", className);
+            LOG.warn("Declaring bundle unavailable for entity {}", className);
         } else {
             try {
                 definition = declaringBundle.loadClass(className);

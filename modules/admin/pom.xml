@@ -53,28 +53,9 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>motech-platform-web-security</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.motechproject</groupId>
-            <artifactId>motech-platform-osgi-extender-fragment</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>motech-pax-it</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
-        </dependency>
-        <!-- OSGI dependencies -->
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>com.springsource.javax.servlet</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>org.springframework.web.servlet</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -83,10 +64,6 @@
         <dependency>
             <groupId>org.apache.activemq</groupId>
             <artifactId>org.motechproject.org.apache.activemq</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>com.springsource.org.apache.commons.io</artifactId>
         </dependency>
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
@@ -121,12 +98,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>motech-testing-utils</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <profiles>
@@ -134,30 +105,6 @@
             <id>IT</id>
             <build>
                 <plugins>
-                    <plugin>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.6</version>
-                        <executions>
-                            <execution>
-                                <id>drop DB =&gt; motech-platform-startup</id>
-                                <phase>pre-integration-test</phase>
-                                <configuration>
-                                    <target>
-                                        <exec executable="curl">
-                                            <arg value="-s" />
-                                            <arg value="-S" />
-                                            <arg value="-X" />
-                                            <arg value="DELETE" />
-                                            <arg value="http://${db.server}:${db.port}/${db.prefix}motech-platform-startup" />
-                                        </exec>
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
                     <!--
                         We override the failsafe plugin so that it only runs our test suite,
                         so that OSGi testing is more effective. For now we have to this on pom by
@@ -279,9 +226,6 @@
                         <Import-Package>
                             org.aopalliance.aop,
                             org.apache.commons.fileupload,
-                            org.ektorp.impl,
-                            org.ektorp.spring,
-                            org.ektorp.support,
                             org.motechproject.event.listener,
                             org.motechproject.event.listener.annotations,
                             org.motechproject.config.service,

@@ -32,9 +32,6 @@ public interface ConfigurationService {
      * directory specified by the environment variable <code>MOTECH_CONFIG_DIR</code>.
      * <code>bootstrap.properties</code> contains the following properties:
      * <pre>
-     *                 couchDb.url (Mandatory)
-     *                 couchDb.username (If required)
-     *                 couchDb.password (If required)
      *                 sql.url (Mandatory)
      *                 sql.username (If required)
      *                 sql.password (If required)
@@ -43,9 +40,6 @@ public interface ConfigurationService {
      *             </pre>
      * An example <code>bootstrap.properties</code> is given below:
      * <pre>
-     *                 couchDb.url=http://localhost:5984
-     *                 couchDb.username=motech
-     *                 couchDb.password=motech
      *                 sql.url=jdbc:mysql://localhost:3306/
      *                 sql.username=motech
      *                 sql.password=motech
@@ -57,9 +51,6 @@ public interface ConfigurationService {
      * If <code>MOTECH_CONFIG_DIR</code> environment variable is <b>not</b> set, load the specific
      * configuration values from the following environment variables:
      * <pre>
-     *                  MOTECH_COUCHDB_URL (Mandatory)
-     *                  MOTECH_COUCHDB_USERNAME (If required)
-     *                  MOTECH_COUCHDB_PASSWORD (If required)
      *                  MOTECH_SQL_URL (Mandatory)
      *                  MOTECH_SQL_USERNAME (If required)
      *                  MOTECH_SQL_PASSWORD (If required)
@@ -299,17 +290,47 @@ public interface ConfigurationService {
      */
     void deleteByBundle(String module);
 
+    /**
+     * Loads the default config for MOTECH from the resource file.
+     *
+     * @return default settings
+     */
     SettingsRecord loadDefaultConfig();
 
+    /**
+     * Loads current MOTECH configuration
+     *
+     * @return current MOTECH settings
+     */
     SettingsRecord loadConfig();
 
+    /**
+     * Checks whether set MOTECH configuration requires the configuraton files to be present
+     *
+     * @return true if files are required, false otherwise
+     */
     boolean requiresConfigurationFiles();
 
+    /**
+     * Bulk add or update method for the Module Properties records. Iterates through
+     * the passed records and either adds them, if they are not present, or updates otherwise.
+     *
+     * @param records a list of properties records
+     */
     void addOrUpdateModuleRecords(List<ModulePropertiesRecord> records);
 
+    /**
+     * Removes given module properties records
+     *
+     * @param records a list of properties records to remove
+     */
     void removeModuleRecords(List<ModulePropertiesRecord> records);
 
+    /**
+     * A convenient method for adding or updating the properties, which determines on its
+     * own whether the record should be added or updated
+     *
+     * @param record a record to store
+     */
     void addOrUpdateModuleRecord(ModulePropertiesRecord record);
-
-
 }

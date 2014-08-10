@@ -5,38 +5,12 @@ package org.motechproject.server.web;
  */
 
 public class BootstrapConfigForm {
-    private String couchDbUrl;
-    private String couchDbUsername;
-    private String couchDbPassword;
     private String sqlUrl;
+    private String sqlDriver;
     private String sqlUsername;
     private String sqlPassword;
     private String tenantId;
     private String configSource;
-
-    public String getCouchDbUrl() {
-        return couchDbUrl;
-    }
-
-    public void setCouchDbUrl(String couchDbUrl) {
-        this.couchDbUrl = couchDbUrl;
-    }
-
-    public String getCouchDbUsername() {
-        return couchDbUsername;
-    }
-
-    public void setCouchDbUsername(String couchDbUsername) {
-        this.couchDbUsername = couchDbUsername;
-    }
-
-    public String getCouchDbPassword() {
-        return couchDbPassword;
-    }
-
-    public void setCouchDbPassword(String couchDbPassword) {
-        this.couchDbPassword = couchDbPassword;
-    }
 
     public String getSqlUrl() {
         return sqlUrl;
@@ -44,6 +18,14 @@ public class BootstrapConfigForm {
 
     public void setSqlUrl(String sqlUrl) {
         this.sqlUrl = sqlUrl;
+    }
+
+    public String getSqlDriver() {
+        return sqlDriver;
+    }
+
+    public void setSqlDriver(String sqlDriver) {
+        this.sqlDriver = sqlDriver;
     }
 
     public String getSqlUsername() {
